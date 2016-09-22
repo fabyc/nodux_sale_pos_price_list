@@ -7,5 +7,6 @@ copyright notices and license terms. -->
             position="after">
         <label name="listas_precios"/>
         <field name="listas_precios"/>
+        <newline/>
     </xpath>
 </data>
