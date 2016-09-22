@@ -260,6 +260,11 @@ class SaleLine(ModelSQL, ModelView):
         if 'amount' not in cls.amount_w_tax.on_change_with:
             cls.amount_w_tax.on_change_with.add('amount')
 
+        if 'listas_precios' not in cls.unit_price_w_tax.on_change_with:
+            cls.unit_price_w_tax.on_change_with.add('listas_precios')
+        if 'listas_precios' not in cls.amount_w_tax.on_change_with:
+            cls.amount_w_tax.on_change_with.add('listas_precios')
+
     @fields.depends('unit_price', 'listas_precios', 'gross_unit_price', 'discount',
         '_parent_sale.sale_discount', 'product', 'descuento_desglose', 'type',
         'amount','_parent_sale.currency', 'quantity')
