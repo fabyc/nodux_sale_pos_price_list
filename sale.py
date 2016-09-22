@@ -57,6 +57,7 @@ class Sale():
                             sub0 = sub0 + (line.unit_price * Decimal(line.quantity))
                         elif str('{:.0f}'.format(t.rate*100)) == '14':
                             sub14 = sub14 + (line.unit_price * Decimal(line.quantity))
+                total_new += line.amount_w_tax
 
                 if line.product:
                     descuento_parcial = Decimal(line.product.template.list_price - line.unit_price)
@@ -107,17 +108,14 @@ class Sale():
         if self.currency:
             changes['total_amount'] = self.currency.round(
                 changes['total_amount'])
-        print "Changes ", changes
-        """
+
         if total_new == changes['total_amount']:
-            print "Esta bien"
             pass
         else:
-            print "Cambia"
             changes['total_amount'] = total_new
             changes['untaxed_amount'] = (changes['total_amount']
                 - changes['tax_amount'])
-        """
+
         return changes
 
     @classmethod
