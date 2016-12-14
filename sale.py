@@ -12,7 +12,7 @@ from datetime import datetime,timedelta
 from trytond.transaction import Transaction
 from trytond.model import fields
 
-__all__ = ['Sale','SaleLine']
+__all__ = ['Sale','SaleLine', 'SaleWarehouse', 'SalePriceList']
 
 __metaclass__ = PoolMeta
 
@@ -21,9 +21,52 @@ _ZERO = Decimal('0.0')
 class Sale():
     __name__ = 'sale.sale'
 
-    @fields.depends('lines', 'currency', 'party')
+    all_list_price = fields.One2Many('sale.list_by_product', 'sale', 'Price List', readonly=True)
+
+    warehouse_sale = fields.One2Many('sale.warehouse', 'sale', 'Productos por bodega', readonly=True)
+    
+    @fields.depends('lines', 'price_list')
+    def on_change_price_list(self):
+        res={}
+        pool = Pool()
+        PriceList = pool.get('product.price_list')
+        Party = pool.get('party.party')
+        Uom = pool.get('product.uom')
+        Template = pool.get('product.template')
+        Product = pool.get('product.product')
+
+        if (Transaction().context.get('price_list') and Transaction().context.get('customer')):
+            price_list = PriceList(Transaction().context['price_list'])
+            customer = Party(Transaction().context['customer'])
+            context_uom = None
+            if Transaction().context.get('uom'):
+                context_uom = Uom(Transaction().context['uom'])
+            for line in self.lines:
+                id_template = line.product.template.id
+                templates = Template.search([('id', '=', id_template)])
+                for template in templates:
+                    if template.listas_precios:
+                        for lista in template.listas_precios:
+                            if lista.lista_precio == price_list:
+                                prices[product.id] = lista.fijo
+                                res['lines'].setdefault('add', []).append((0, sale_line))
+        return res
+
+
+    @fields.depends('lines', 'currency', 'party', 'all_list_price','warehouse_sale')
     def on_change_lines(self):
         pool = Pool()
+        Move = pool.get('stock.product_quantities_warehouse')
+        Location = pool.get('stock.location')
+        location = Location.search([('type', '=', 'warehouse')])
+        Product = Pool().get('product.product')
+        Line = pool.get('sale.line')
+        #todos los movimientos
+        Move = pool.get('stock.move')
+        #movimientos de inventario del producto
+        StockLine = pool.get('stock.inventory.line')
+        stock = 0
+        in_s = 0
         Tax = pool.get('account.tax')
         Invoice = pool.get('account.invoice')
         Configuration = pool.get('account.configuration')
@@ -42,13 +85,56 @@ class Sale():
             'subtotal_12': Decimal('0.0'),
             'subtotal_14': Decimal('0.0'),
             'subtotal_0': Decimal('0.0'),
-            'descuento':Decimal('0.0')
+            'descuento':Decimal('0.0'),
+
             }
+        changes['all_list_price'] = {}
+        changes['warehouse_sale'] = {}
+        cont = 0
+
+        if self.warehouse_sale:
+            changes['warehouse_sale']['remove'] = [x['id'] for x in self.warehouse_sale]
+        if self.all_list_price:
+            changes['all_list_price']['remove'] = [x['id'] for x in self.all_list_price]
 
         if self.lines:
             context = self.get_tax_context()
             taxes = {}
+            cont = 1
+            tam = 1
             for line in self.lines:
+                tam += tam
+
+            for line in self.lines:
+                if line.product:
+                    cont += cont
+                    if line.product.listas_precios and cont ==tam:
+                        for list_p in line.product.listas_precios:
+                            result_list = {
+                                'lista_precio': list_p.lista_precio.name,
+                                'fijo': list_p.fijo,
+                                'fijo_con_iva': list_p.fijo_con_iva,
+                            }
+                            changes['all_list_price'].setdefault('add', []).append((0, result_list))
+                        for lo in location:
+                            #inventario por cada uno de los productos
+                            in_stock = Move.search([('product', '=', line.product), ('to_location','=', lo.storage_location)])
+                            for i in in_stock :
+                                in_s += i.quantity
+                            #todos los movimientos que ha tenido el producto
+                            move = Move.search([('product', '=', line.product), ('from_location','=', lo.storage_location)])
+                            for m in move :
+                                stock += m.quantity
+                            s_total = in_s - stock
+                            result = {
+                                'product': line.product.name,
+                                'warehouse': lo.name,
+                                'quantity': str(int(s_total)),
+                            }
+                            stock = 0
+                            in_s = 0
+                            changes['warehouse_sale'].setdefault('add', []).append((0, result))
+
                 if  line.taxes:
                     for t in line.taxes:
                         if str('{:.0f}'.format(t.rate*100)) == '12':
@@ -115,7 +201,7 @@ class Sale():
             changes['total_amount'] = total_new
             changes['untaxed_amount'] = (changes['total_amount']
                 - changes['tax_amount'])
-
+        print "Agregar ", changes
         return changes
 
     @classmethod
@@ -410,3 +496,21 @@ class SaleLine(ModelSQL, ModelView):
             'gross_unit_price_wo_round': gross_unit_price_wo_round,
             'unit_price': unit_price,
             }
+
+class SaleWarehouse(ModelView, ModelSQL):
+    'Producto por Bodega'
+    __name__ = 'sale.warehouse'
+
+    sale = fields.Many2One('sale.sale', 'Sale', readonly = True)
+    product = fields.Char('Producto',  readonly = True)
+    warehouse = fields.Char('Bodega',  readonly = True)
+    quantity = fields.Char('Cantidad', readonly = True)
+
+class SalePriceList(ModelView, ModelSQL):
+    'Sale Price List'
+    __name__ = 'sale.list_by_product'
+
+    sale = fields.Many2One('sale.sale', 'Sale', readonly = True)
+    lista_precio = fields.Char('Lista de Precio')
+    fijo = fields.Numeric('Precio sin IVA', digits=(16, 6))
+    fijo_con_iva = fields.Numeric('Precio con IVA', digits=(16, 6))

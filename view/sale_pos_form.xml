@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!-- This file is part sale_pos module for Tryton.
+The COPYRIGHT file at the top level of this repository contains the full copyright notices and license terms. -->
+<data>
+
+
+    <xpath expr="/form/group[@id='full_workflow_buttons']" position="after">
+        <newline/>
+        <field name="all_list_price" colspan="2"
+          view_ids="nodux_sale_pos.list_price_line_view_tree"/>
+        <field name="warehouse_sale" colspan="2"
+          view_ids="nodux_sale_pos.warehouse_line_view_tree"/>
+        <newline/>
+    </xpath>
+
+</data>
