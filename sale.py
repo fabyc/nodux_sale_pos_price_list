@@ -24,7 +24,7 @@ class Sale():
     all_list_price = fields.One2Many('sale.list_by_product', 'sale', 'Price List', readonly=True)
 
     warehouse_sale = fields.One2Many('sale.warehouse', 'sale', 'Productos por bodega', readonly=True)
-    
+
     @fields.depends('lines', 'price_list')
     def on_change_price_list(self):
         res={}
@@ -201,7 +201,6 @@ class Sale():
             changes['total_amount'] = total_new
             changes['untaxed_amount'] = (changes['total_amount']
                 - changes['tax_amount'])
-        print "Agregar ", changes
         return changes
 
     @classmethod
