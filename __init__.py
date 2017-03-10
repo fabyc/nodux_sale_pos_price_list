@@ -10,6 +10,4 @@ def register():
         Sale,
         SaleLine,
         Product,
-        SaleWarehouse,
-        SalePriceList,
         module='nodux_sale_pos_price_list', type_='model')

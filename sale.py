@@ -12,7 +12,7 @@ from datetime import datetime,timedelta
 from trytond.transaction import Transaction
 from trytond.model import fields
 
-__all__ = ['Sale','SaleLine', 'SaleWarehouse', 'SalePriceList']
+__all__ = ['Sale','SaleLine']
 
 __metaclass__ = PoolMeta
 
@@ -25,7 +25,7 @@ class Sale():
 
     warehouse_sale = fields.One2Many('sale.warehouse', 'sale', 'Productos por bodega', readonly=True)
 
-    @fields.depends('lines', 'price_list')
+    @fields.depends('lines', 'price_list', 'party')
     def on_change_price_list(self):
         res={}
         pool = Pool()
@@ -35,12 +35,9 @@ class Sale():
         Template = pool.get('product.template')
         Product = pool.get('product.product')
 
-        if (Transaction().context.get('price_list') and Transaction().context.get('customer')):
-            price_list = PriceList(Transaction().context['price_list'])
-            customer = Party(Transaction().context['customer'])
-            context_uom = None
-            if Transaction().context.get('uom'):
-                context_uom = Uom(Transaction().context['uom'])
+        if self.price_list:
+            price_list = self.price_list
+
             for line in self.lines:
                 id_template = line.product.template.id
                 templates = Template.search([('id', '=', id_template)])
@@ -48,10 +45,12 @@ class Sale():
                     if template.listas_precios:
                         for lista in template.listas_precios:
                             if lista.lista_precio == price_list:
-                                prices[product.id] = lista.fijo
-                                res['lines'].setdefault('add', []).append((0, sale_line))
+                                res['line.unit_price'] = lista.fijo
+                                line.unit_price = res['line.unit_price']
+                                res['line.listas_precios'] = lista.lista_precio.id
+                                line.listas_precios = lista.lista_precio.id
+                                res['line.amount'] = line.on_change_with_amount()
         return res
-
 
     @fields.depends('lines', 'currency', 'party', 'all_list_price','warehouse_sale')
     def on_change_lines(self):
@@ -495,21 +494,3 @@ class SaleLine(ModelSQL, ModelView):
             'gross_unit_price_wo_round': gross_unit_price_wo_round,
             'unit_price': unit_price,
             }
-
-class SaleWarehouse(ModelView, ModelSQL):
-    'Producto por Bodega'
-    __name__ = 'sale.warehouse'
-
-    sale = fields.Many2One('sale.sale', 'Sale', readonly = True)
-    product = fields.Char('Producto',  readonly = True)
-    warehouse = fields.Char('Bodega',  readonly = True)
-    quantity = fields.Char('Cantidad', readonly = True)
-
-class SalePriceList(ModelView, ModelSQL):
-    'Sale Price List'
-    __name__ = 'sale.list_by_product'
-
-    sale = fields.Many2One('sale.sale', 'Sale', readonly = True)
-    lista_precio = fields.Char('Lista de Precio')
-    fijo = fields.Numeric('Precio sin IVA', digits=(16, 6))
-    fijo_con_iva = fields.Numeric('Precio con IVA', digits=(16, 6))
