@@ -27,6 +27,7 @@ class Sale():
 
     @fields.depends('lines', 'price_list', 'party')
     def on_change_price_list(self):
+        
         res={}
         pool = Pool()
         PriceList = pool.get('product.price_list')

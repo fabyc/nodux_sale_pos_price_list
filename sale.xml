@@ -11,58 +11,5 @@ The COPYRIGHT file at the top level of this repository contains the full copyrig
             <field name="name">sale_line_form</field>
         </record>
 
-        <record model="ir.ui.view" id="sale_pos_view_form">
-            <field name="model">sale.sale</field>
-            <field name="type">form</field>
-            <field name="inherit" ref="sale_pos.sale_pos_view_form"/>
-            <field name="name">sale_pos_form</field>
-        </record>
-
-        <!--Views board -->
-        <!--record model="ir.action.act_window" id="act_list_price_tree2">
-            <field name="name">Products</field>
-            <field name="res_model">sale.list_by_product</field>
-            <field name="domain">[('parent', '=', None)]</field>
-        </record>
-        <record model="ir.action.act_window.view"
-            id="act_list_price_tree2_view1">
-            <field name="sequence" eval="10"/>
-            <field name="view" ref="list_price_line_view_tree"/>
-            <field name="act_window" ref="act_list_price_tree2"/>
-        </record>
-
-        <record model="ir.ui.view" id="work_view_graph">
-            <field name="model">timesheet.work</field>
-            <field name="type">graph</field>
-            <field name="name">work_graph</field>
-        </record>
-        <record model="ir.action.act_window" id="act_work_form2">
-            <field name="name">Hours per Work</field>
-            <field name="res_model">timesheet.work</field>
-            <field name="domain">[('parent', '=', Get(Eval('timesheet.act_work_tree2', {}), 'id', None))]</field>
-        </record>
-        <record model="ir.action.act_window.view"
-            id="act_work_form2_view1">
-            <field name="sequence" eval="10"/>
-            <field name="view" ref="work_view_graph"/>
-            <field name="act_window" ref="act_work_form2"/>
-        </record>
-
-        <record model="ir.ui.view" id="list_price_board">
-            <field name="type">board</field>
-            <field name="model"></field>
-            <field name="name">list_price_board</field>
-        </record>
-        <record model="ir.action.act_window" id="act_list_price_board">
-            <field name="name">List Price</field>
-        </record>
-        <record model="ir.action.act_window.view"
-            id="act_list_price_board_view1">
-            <field name="sequence" eval="10"/>
-            <field name="view" ref="list_price_board"/>
-            <field name="act_window" ref="act_list_price_board"/>
-        </record-->
-
-
     </data>
 </tryton>
