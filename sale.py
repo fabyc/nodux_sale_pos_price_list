@@ -21,13 +21,13 @@ _ZERO = Decimal('0.0')
 class Sale():
     __name__ = 'sale.sale'
 
-    all_list_price = fields.One2Many('sale.list_by_product', 'sale', 'Price List', readonly=True)
+    #all_list_price = fields.One2Many('sale.list_by_product', 'sale', 'Price List', readonly=True)
 
-    warehouse_sale = fields.One2Many('sale.warehouse', 'sale', 'Productos por bodega', readonly=True)
+    #warehouse_sale = fields.One2Many('sale.warehouse', 'sale', 'Productos por bodega', readonly=True)
 
     @fields.depends('lines', 'price_list', 'party')
     def on_change_price_list(self):
-        
+
         res={}
         pool = Pool()
         PriceList = pool.get('product.price_list')
